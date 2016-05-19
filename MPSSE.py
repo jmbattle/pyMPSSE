@@ -16,7 +16,7 @@ try:
 except:
     print '%s not found' % dll_loc.split('\\')[-1]
         
-#####GLOBAL DEFINES############################################################
+#####GLOBALS###################################################################
 
  # Clock Rate Defines
 I2C_CLOCK_STANDARD_MODE = 100000 # 1kHz Mode
@@ -65,6 +65,8 @@ STATUS_CODES = {0: 'FT_OK',
           18: 'FT_OTHER_ERROR',
           19: 'FT_DEVICE_LIST_NOT_READY'}
           
+#####STRUCTS###################################################################
+          
 class FT_DEVICE_LIST_INFO_NODE(ctypes.Structure):
     _fields_ = [
         ('Flags', ctypes.c_ulong),        
@@ -81,7 +83,7 @@ class CHANNEL_CONFIG(ctypes.Structure):
         ('LatencyTimer', ctypes.c_ubyte),
         ('Options', ctypes.c_ulong)]
           
-###############################################################################
+#####CLASSES###################################################################
 
 class I2CMaster():
     
@@ -280,7 +282,9 @@ class I2CMaster():
     def Cleanup_libMPSSE(self):
         dll.Cleanup_libMPSSE.argtypes = []    
         dll.Cleanup_libMPSSE.restype = None
-        dll.Cleanup_libMPSSE()       
+        dll.Cleanup_libMPSSE()  
+        
+####TESTS######################################################################
                                  
 if __name__ == "__main__": 
     
