@@ -282,21 +282,4 @@ class I2CMaster():
     def Cleanup_libMPSSE(self):
         dll.Cleanup_libMPSSE.argtypes = []    
         dll.Cleanup_libMPSSE.restype = None
-        dll.Cleanup_libMPSSE()  
-        
-####TESTS######################################################################
-                                 
-if __name__ == "__main__": 
-    
-    test = I2CMaster()
-    test.Init_libMPSSE()
-    test.GetNumChannels()
-    test.GetChannelInfo(0) # Channel index starts at 0
-    handle = test.OpenChannel(0) # Assign handle to channel 0
-    test.InitChannel(handle, mode='Standard') # Configure I2C port in 100kHz mode
-    test.DeviceWrite(handle, 0x71, 0x00, []) # Write register address 0x00 to device address 0x71 (R/W bitis omitted!)
-    test.DeviceRead(handle, 0x71, 0x07, [], 2) # Read two bytes from register address 0x07 (device address 0x71)
-    #test.FT_WriteGPIO(handle, 255, 0)
-    #test.FT_ReadGPIO(handle)
-    test.CloseChannel(handle) # Free channel at specified handle 
-    test.Cleanup_libMPSSE() # Graceful exit
+        dll.Cleanup_libMPSSE()
