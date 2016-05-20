@@ -100,6 +100,7 @@ class I2CMaster():
             print STATUS_CODES[dll.I2C_GetNumChannels(ctypes.byref(self._numchannels))]
         else:
             print 'Number of Channels: %i' % self._numchannels.value
+        return self._numchannels.value
 
 # I2C_GetChannelInfo(uint32 index, FT_DEVICE_LIST_INFO_NODE *chanInfo)
             
@@ -111,13 +112,16 @@ class I2CMaster():
         if dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo)) != 0:
             print STATUS_CODES[dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo))]
         else:
-            print 'Flags: %i' % self._chaninfo.Flags
+            self._SerialNumber = ''.join(map(chr, self._chaninfo.SerialNumber)).split('\x00')[0]  # Remove non-ASCII characters
+            self._Description = ''.join(map(chr, self._chaninfo.Description)).split('\x00')[0] # Remove non-ASCII characters
+            print 'Flags: %i' % self._chaninfo.Flags 
             print 'Type: %i' % self._chaninfo.Type
             print 'ID: %i' % self._chaninfo.ID
             print 'LocID: %i' % self._chaninfo.LocID
-            print 'SerialNumber: %s' % ''.join(map(chr, self._chaninfo.SerialNumber)).split('\x00')[0] # Remove non-ASCII characters
-            print 'Description: %s' % ''.join(map(chr, self._chaninfo.Description)).split('\x00')[0] # Remove non-ASCII characters
+            print 'SerialNumber: %s' % self._SerialNumber
+            print 'Description: %s' % self._Description
             print 'Handle: %i' % self._chaninfo.ftHandle
+        return (self._chaninfo.Flags, self._chaninfo.Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
 
 # I2C_OpenChannel(uint32 index, FT_HANDLE *handle)
             
@@ -231,7 +235,7 @@ class I2CMaster():
         
 # FT_WriteGPIO(FT_HANDLE handle, uint8 dir, uint8 value)
         
-    def FT_WriteGPIO(self, handle, direction, value):
+    def WriteGPIO(self, handle, direction, value):
         dll.FT_WriteGPIO.argtypes = [ctypes.c_ulong, ctypes.c_ubyte, ctypes.c_ubyte]    
         dll.FT_WriteGPIO.restype = ctypes.c_ulong
         self._handle = ctypes.c_ulong(handle)
@@ -252,7 +256,7 @@ class I2CMaster():
         
 # FT_ReadGPIO(FT_HANDLE handle, uint8 *value)
 
-    def FT_ReadGPIO(self, handle):
+    def ReadGPIO(self, handle):
         dll.FT_ReadGPIO.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte)]    
         dll.FT_ReadGPIO.restype = ctypes.c_ulong
         self._handle = ctypes.c_ulong(handle)
@@ -269,6 +273,7 @@ class I2CMaster():
             print 'P.5: State = %s' % ('High' if (self._value.value & 32) else 'Low') 
             print 'P.6: State = %s' % ('High' if (self._value.value & 64) else 'Low') 
             print 'P.7: State = %s' % ('High' if (self._value.value & 128) else 'Low')
+            return self._value.value
 
 #  Init_libMPSSE(void)
         
