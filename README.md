@@ -8,8 +8,11 @@ Please ensure that you've installed both ft2dxxx and libMPSSE before attempting 
 
 **NOTE:** Tested with Python 2.7 on Windows 7. 
 
+Enjoy! :metal:
+
 ## Setup
-The script currently looks for libMPSSE.dll in *C:\Python27\Lib\site-packages\*. The location must be updated if residing elsewhere on your system.   
+The script currently looks for libMPSSE.dll in `C:\Python27\Lib\site-packages\`. 
+The location must be updated if residing elsewhere on your system.   
 
 ## References
 [MPSSE Basics]
