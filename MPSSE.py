@@ -132,7 +132,6 @@ class I2CMaster():
         self._handle = ctypes.c_uint()
         if dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle)) != 0:
             print STATUS_CODES[dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle))]
-            raise SystemExit
         else:
             print 'Successfully opened device channel %i with handle %i' % (self._index.value, self._handle.value)
             return self._handle.value
