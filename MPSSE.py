@@ -100,7 +100,7 @@ class I2CMaster():
             print STATUS_CODES[dll.I2C_GetNumChannels(ctypes.byref(self._numchannels))]
         else:
             print 'Number of Channels: %i' % self._numchannels.value
-        return self._numchannels.value
+            return self._numchannels.value
 
 # I2C_GetChannelInfo(uint32 index, FT_DEVICE_LIST_INFO_NODE *chanInfo)
             
@@ -121,7 +121,7 @@ class I2CMaster():
             print 'SerialNumber: %s' % self._SerialNumber
             print 'Description: %s' % self._Description
             print 'Handle: %i' % self._chaninfo.ftHandle
-        return (self._chaninfo.Flags, self._chaninfo.Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
+            return (self._chaninfo.Flags, self._chaninfo.Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
 
 # I2C_OpenChannel(uint32 index, FT_HANDLE *handle)
             
