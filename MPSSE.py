@@ -126,10 +126,10 @@ class I2CMaster():
 # I2C_OpenChannel(uint32 index, FT_HANDLE *handle)
             
     def OpenChannel(self, index):
-        dll.I2C_OpenChannel.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_uint)]    
+        dll.I2C_OpenChannel.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_ulong)]    
         dll.I2C_OpenChannel.restype = ctypes.c_ulong
         self._index = ctypes.c_ulong(index)
-        self._handle = ctypes.c_uint()
+        self._handle = ctypes.c_ulong()
         if dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle)) != 0:
             print STATUS_CODES[dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle))]
         else:
@@ -287,3 +287,4 @@ class I2CMaster():
         dll.Cleanup_libMPSSE.argtypes = []    
         dll.Cleanup_libMPSSE.restype = None
         dll.Cleanup_libMPSSE()
+        
