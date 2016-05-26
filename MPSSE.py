@@ -64,6 +64,18 @@ STATUS_CODES = {0: 'FT_OK',
           17: 'FT_NOT_SUPPORTED',
           18: 'FT_OTHER_ERROR',
           19: 'FT_DEVICE_LIST_NOT_READY'}
+
+# Device Types
+DEVICE_TYPES = {0: 'FT_DEVICE_BM',
+          1: 'FT_DEVICE_BM',
+          2: 'FT_DEVICE_100AX',
+          3: 'FT_DEVICE_UNKNOWN',
+          4: 'FT_DEVICE_2232C',
+          5: 'FT_DEVICE_232R',
+          6: 'FT_DEVICE_2232H',
+          7: 'FT_DEVICE_4232H',
+          8: 'FT_DEVICE_232H',
+          9: 'FT_DEVICE_X_SERIES'}
           
 #####STRUCTS###################################################################
           
@@ -112,16 +124,17 @@ class I2CMaster():
         if dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo)) != 0:
             print STATUS_CODES[dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo))]
         else:
+            self._Type = DEVICE_TYPES[self._chaninfo.Type]            
             self._SerialNumber = ''.join(map(chr, self._chaninfo.SerialNumber)).split('\x00')[0]  # Remove non-ASCII characters
             self._Description = ''.join(map(chr, self._chaninfo.Description)).split('\x00')[0] # Remove non-ASCII characters
             print 'Flags: %i' % self._chaninfo.Flags 
-            print 'Type: %i' % self._chaninfo.Type
+            print 'Type: %s' % self._Type
             print 'ID: %i' % self._chaninfo.ID
             print 'LocID: %i' % self._chaninfo.LocID
             print 'SerialNumber: %s' % self._SerialNumber
             print 'Description: %s' % self._Description
             print 'Handle: %i' % self._chaninfo.ftHandle
-            return (self._chaninfo.Flags, self._chaninfo.Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
+            return (self._chaninfo.Flags, self._Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
 
 # I2C_OpenChannel(uint32 index, FT_HANDLE *handle)
             
@@ -287,4 +300,3 @@ class I2CMaster():
         dll.Cleanup_libMPSSE.argtypes = []    
         dll.Cleanup_libMPSSE.restype = None
         dll.Cleanup_libMPSSE()
-        
