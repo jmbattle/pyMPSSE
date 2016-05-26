@@ -19,6 +19,8 @@ The location must be updated if residing elsewhere on your system.
 
 [libMPSSE User Guide]
 
+[libMPSSE-I2C Sample Project]
+
 [libMPSSE Source]
 
 [FT232H Datasheet]
@@ -34,3 +36,4 @@ The location must be updated if residing elsewhere on your system.
 [libMPSSE Source]:  http://www.ftdichip.com/Support/SoftwareExamples/MPSSE/LibMPSSE-I2C/LibMPSSE-I2C_source.zip
 [FT232H Datasheet]: http://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf
 [C232HM-DDHSL-0 Datasheet]: http://www.ftdichip.com/Support/Documents/DataSheets/Cables/DS_C232HM_MPSSE_CABLE.pdf
+[libMPSSE-I2C Sample Project]: http://www.ftdichip.com/Support/Documents/AppNotes/AN_190_C232HM_MPSSE_Cable_in_USB_to_I2C_Interface.pdf
