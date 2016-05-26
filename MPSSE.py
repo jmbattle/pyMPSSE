@@ -9,7 +9,7 @@ __email__ = "jason.battle@gmail.com"
 
 import ctypes
 
-dll_loc = 'C:\Python27\Lib\site-packages\libMPSSE.dll'
+dll_loc = r'C:\Python27\Lib\site-packages\libMPSSE.dll'
 
 try:
     dll = ctypes.CDLL(dll_loc)
