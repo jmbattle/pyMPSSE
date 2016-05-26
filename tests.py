@@ -25,3 +25,4 @@ if __name__ == "__main__":
     gpiodathi = test.ReadGPIO(handle)
     test.CloseChannel(handle) # Free channel at specified handle 
     test.Cleanup_libMPSSE() # Graceful exit
+    
