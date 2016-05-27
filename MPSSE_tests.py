@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""MPSSE.py: A python wrapper for the FTDI-provided libMPSSE DLL (I2C only)
+"""MPSSE_tests.py: Simple test routine for pyMPSSE wrapper functions
 
 __author__ = "Jason M. Battle"
 __copyright__ = "Copyright 2016, Jason M. Battle"
