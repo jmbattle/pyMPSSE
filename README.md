@@ -3,8 +3,8 @@ A Python wrapper for the [libMPSSE] library, intended for use with FTDI USB-Seri
 
 Two variants of libMPSSE exist ([I2C] and [SPI]), however, the initial pyMPSSE release only covers **I2C communication** and **GPIO control**. Future enhancements may include support for SPI and JTAG. 
 
-**NOTE:** libMPSSE is a library extension to the [ftd2xxx] device driver. 
-Please ensure that you've installed both ft2dxxx and libMPSSE before attempting to use pyMPSSE.  
+**NOTE:** libMPSSE is an extension of the [ftd2xxx] library. 
+Please ensure that you've installed both ft2dxxx and libMPSSE as well as the D2xx driver before attempting to use pyMPSSE.  
 
 **NOTE:** Tested with Python 2.7 on Windows 7. 
 
