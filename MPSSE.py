@@ -8,6 +8,7 @@ __email__ = "jason.battle@gmail.com"
 """
 
 import ctypes
+from collections import OrderedDict
 
 dll_loc = r'C:\Python27\Lib\site-packages\libMPSSE.dll'
 
@@ -116,45 +117,58 @@ class I2CMaster():
 
 # I2C_GetChannelInfo(uint32 index, FT_DEVICE_LIST_INFO_NODE *chanInfo)
             
-    def GetChannelInfo(self, index):
+    def GetChannelInfo(self):
         dll.I2C_GetChannelInfo.argtypes = [ctypes.c_ulong, ctypes.POINTER(FT_DEVICE_LIST_INFO_NODE)]    
         dll.I2C_GetChannelInfo.restype = ctypes.c_ulong
-        self._index = ctypes.c_ulong(index)
         self._chaninfo = FT_DEVICE_LIST_INFO_NODE()
-        if dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo)) != 0:
-            print STATUS_CODES[dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo))]
-        else:
-            self._Type = DEVICE_TYPES[self._chaninfo.Type]            
-            self._SerialNumber = ''.join(map(chr, self._chaninfo.SerialNumber)).split('\x00')[0]  # Remove non-ASCII characters
-            self._Description = ''.join(map(chr, self._chaninfo.Description)).split('\x00')[0] # Remove non-ASCII characters
-            print 'Flags: %i' % self._chaninfo.Flags 
-            print 'Type: %s' % self._Type
-            print 'ID: %i' % self._chaninfo.ID
-            print 'LocID: %i' % self._chaninfo.LocID
-            print 'SerialNumber: %s' % self._SerialNumber
-            print 'Description: %s' % self._Description
-            print 'Handle: %i' % self._chaninfo.ftHandle
-            return (self._chaninfo.Flags, self._Type, self._chaninfo.ID, self._chaninfo.LocID, self._SerialNumber, self._Description, self._chaninfo.ftHandle)
+        self._fulldevlist = OrderedDict()
+        for idx in range(self._numchannels.value):
+            self._index = ctypes.c_ulong(idx)
+            if dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo)) != 0:
+                print STATUS_CODES[dll.I2C_GetChannelInfo(self._index, ctypes.byref(self._chaninfo))]
+            else:
+                self._Type = DEVICE_TYPES[self._chaninfo.Type]            
+                self._SerialNumber = ''.join(map(chr, self._chaninfo.SerialNumber)).split('\x00')[0]  # Remove non-ASCII characters
+                self._Description = ''.join(map(chr, self._chaninfo.Description)).split('\x00')[0] # Remove non-ASCII characters
+                print 'Flags: %i' % self._chaninfo.Flags 
+                print 'Type: %s' % self._Type
+                print 'ID: %i' % self._chaninfo.ID
+                print 'LocID: %i' % self._chaninfo.LocID
+                print 'SerialNumber: %s' % self._SerialNumber
+                print 'Description: %s' % self._Description
+                print 'Handle: %i' % self._chaninfo.ftHandle
+                devinfolist = OrderedDict([('Flags', self._chaninfo.Flags), ('Type', self._Type), ('ID', self._chaninfo.ID), ('LocID', self._chaninfo.LocID), ('SerialNumber', self._SerialNumber), ('Description', self._Description), ('Handle', self._chaninfo.ftHandle)])
+                self._fulldevlist['Dev%i' % idx] = devinfolist                
+            return self._fulldevlist
 
 # I2C_OpenChannel(uint32 index, FT_HANDLE *handle)
             
-    def OpenChannel(self, index):
+    def OpenChannel(self):
         dll.I2C_OpenChannel.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_ulong)]    
         dll.I2C_OpenChannel.restype = ctypes.c_ulong
-        self._index = ctypes.c_ulong(index)
-        self._handle = ctypes.c_ulong()
-        if dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle)) != 0:
-            print STATUS_CODES[dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle))]
+        for idx, device in enumerate(self._fulldevlist.values()):
+            if device['Type'] ==  'FT_DEVICE_232H':
+                self._index = ctypes.c_ulong(idx)
+                if device['Handle'] == 0:
+                    self._handle = ctypes.c_ulong()
+                else:
+                    self._handle = ctypes.c_ulong(device['Handle'])
+            else:
+                continue
+            break
+        if self._handle.value == 0: 
+            if dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle)) != 0:
+                print STATUS_CODES[dll.I2C_OpenChannel(self._index, ctypes.byref(self._handle))]
+            else:
+                print 'Successfully opened device channel %i with handle %i' % (self._index.value, self._handle.value)
         else:
-            print 'Successfully opened device channel %i with handle %i' % (self._index.value, self._handle.value)
-            return self._handle.value
+            print 'Device channel %i is already open with handle %i' % (self._index.value, self._handle.value)
 
 # I2C_InitChannel(FT_HANDLE handle, ChannelConfig *config)
 
-    def InitChannel(self, handle, mode='Standard'):
+    def InitChannel(self, mode='Standard'):
         dll.I2C_InitChannel.argtypes = [ctypes.c_ulong, ctypes.POINTER(CHANNEL_CONFIG)]    
         dll.I2C_InitChannel.restype = ctypes.c_ulong
-        self._handle = ctypes.c_ulong(handle)
         if mode == 'Standard': # All modes default to open-drain drive with three-phase clocking
             self._config = CHANNEL_CONFIG(I2C_CLOCK_STANDARD_MODE, I2C_LATENCY_TIMER, I2C_DISABLE_3PHASE_CLK & I2C_DISABLE_DRIVE_ONLY_ZERO) 
         elif mode == 'Fast':
@@ -179,10 +193,9 @@ class I2CMaster():
             
 # I2C_CloseChannel(FT_HANDLE handle)
         
-    def CloseChannel(self, handle):
+    def CloseChannel(self):
         dll.I2C_CloseChannel.argtypes = [ctypes.c_ulong]    
         dll.I2C_CloseChannel.restype = ctypes.c_ulong
-        self._handle = ctypes.c_ulong(handle)
         if dll.I2C_CloseChannel(self._handle) != 0:
             print STATUS_CODES[dll.I2C_CloseChannel(self._handle)]
         else:
@@ -190,18 +203,16 @@ class I2CMaster():
         
 # I2C_DeviceRead(FT_HANDLE handle, uint32 deviceAddress, uint32 sizeToTransfer, uint8 *buffer, uint32 *sizeTransfered, uint32 options)       
 
-    def DeviceRead(self, handle, devaddress, regaddress, data, numbytes, fastbytes=False):
-        data.insert(0, regaddress) # Prepend data array with register address
-        dll.I2C_DeviceWrite.argtypes = [ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte*len(data)), ctypes.POINTER(ctypes.c_ulong), ctypes.c_ulong] # Buffer argtype is single byte only (register address)    
+    def DeviceRead(self, devaddress, regaddress, numbytes, fastbytes=False):
+        dll.I2C_DeviceWrite.argtypes = [ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ulong), ctypes.c_ulong] # Buffer argtype is single byte only (register address)    
         dll.I2C_DeviceWrite.restype = ctypes.c_ulong
         dll.I2C_DeviceRead.argtypes = [ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte*numbytes), ctypes.POINTER(ctypes.c_ulong), ctypes.c_ulong] # Buffer argtype is specified read length
         dll.I2C_DeviceRead.restype = ctypes.c_ulong
-        self._writebuffer = (ctypes.c_ubyte*len(data))(*data) # Buffer size is set from total data length. Pass data to buffer as variable length argument  
+        self._writebuffer = (ctypes.c_ubyte)(regaddress) # Buffer size is set from total data length. Pass data to buffer as variable length argument  
         self._writebytes = ctypes.c_ulong(1) # Number of bytes to write is total data length (register address + data)
-        self._handle = ctypes.c_ulong(handle)
         self._devaddress = ctypes.c_ulong(devaddress)  # Slave address of target device
         self._readbytes = ctypes.c_ulong(numbytes) # Number of bytes to read is user-specified (passed to function)
-        self._buffer = (ctypes.c_ubyte*numbytes)() # Buffer size is set from number of bytes to read
+        self._readbuffer = (ctypes.c_ubyte*numbytes)() # Buffer size is set from number of bytes to read
         self._numsent = ctypes.c_ulong() # Number of bytes transmitted is number of bytes to read  
         if fastbytes == True:
             self._options = ctypes.c_ulong(I2C_TRANSFER_OPTIONS_START_BIT | I2C_TRANSFER_OPTIONS_STOP_BIT | I2C_TRANSFER_OPTIONS_NACK_LAST_BYTE | I2C_TRANSFER_OPTIONS_FAST_TRANSFER_BYTES)
@@ -209,24 +220,23 @@ class I2CMaster():
             self._options = ctypes.c_ulong(I2C_TRANSFER_OPTIONS_START_BIT | I2C_TRANSFER_OPTIONS_STOP_BIT | I2C_TRANSFER_OPTIONS_NACK_LAST_BYTE)
         if dll.I2C_DeviceWrite(self._handle, self._devaddress, self._writebytes, ctypes.byref(self._writebuffer), ctypes.byref(self._numsent), self._options) != 0:
             print STATUS_CODES[dll.I2C_DeviceWrite(self._handle, self._devaddress, self._writebytes, ctypes.byref(self._writebuffer), ctypes.byref(self._numsent), self._options)]
-        if dll.I2C_DeviceRead(self._handle, self._devaddress, self._readbytes, ctypes.byref(self._buffer), ctypes.byref(self._numsent), self._options) != 0:
-            print STATUS_CODES[dll.I2C_DeviceRead(self._handle, self._devaddress, self._readbytes, ctypes.byref(self._buffer), ctypes.byref(self._numsent), self._options)]
+        if dll.I2C_DeviceRead(self._handle, self._devaddress, self._readbytes, ctypes.byref(self._readbuffer), ctypes.byref(self._numsent), self._options) != 0:
+            print STATUS_CODES[dll.I2C_DeviceRead(self._handle, self._devaddress, self._readbytes, ctypes.byref(self._readbuffer), ctypes.byref(self._numsent), self._options)]
         else:
             print 'I2C read transaction complete'
             print 'Device Address: 0x%02X' % self._devaddress.value
             print 'Register Address: 0x%02X' % regaddress
-            for idx, byte in enumerate(self._buffer):
+            for idx, byte in enumerate(self._readbuffer[:]):
                 print 'Data Byte %i: 0x%02X' % (idx+1, byte)
             print 'Data Length: %i' % self._numsent.value
-            return self._buffer[:]
+            return self._readbuffer[:]
 
 # I2C_DeviceWrite(FT_HANDLE handle, uint32 deviceAddress, uint32 sizeToTransfer, uint8 *buffer, uint32 *sizeTransfered, uint32 options)
 
-    def DeviceWrite(self, handle, devaddress, regaddress, data, fastbytes=False):
+    def DeviceWrite(self, devaddress, regaddress, data, fastbytes=False):
         data.insert(0, regaddress) # Prepend data array with register address
         dll.I2C_DeviceWrite.argtypes = [ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte*len(data)), ctypes.POINTER(ctypes.c_ulong), ctypes.c_ulong] # Buffer argtype is total data length (register address + data)     
         dll.I2C_DeviceWrite.restype = ctypes.c_ulong
-        self._handle = ctypes.c_ulong(handle)
         self._devaddress = ctypes.c_ulong(devaddress) # Slave address of target device
         self._writebytes = ctypes.c_ulong(len(data)) # Number of bytes to write is total data length (register address + data)
         self._buffer = (ctypes.c_ubyte*len(data))(*data) # Buffer size is set from total data length. Pass data to buffer as variable length argument  
@@ -241,16 +251,15 @@ class I2CMaster():
             print 'I2C write transaction complete'
             print 'Device Address: 0x%02X' % self._devaddress.value
             print 'Register Address: 0x%02X' % regaddress
-            for idx, byte in enumerate(self._buffer):
+            for idx, byte in enumerate(self._buffer[:]):
                 print 'Data Byte %i: 0x%02X' % (idx+1, byte)
             print 'Data Length: %i' % self._numsent.value
         
 # FT_WriteGPIO(FT_HANDLE handle, uint8 dir, uint8 value)
         
-    def WriteGPIO(self, handle, direction, value):
+    def WriteGPIO(self, direction, value):
         dll.FT_WriteGPIO.argtypes = [ctypes.c_ulong, ctypes.c_ubyte, ctypes.c_ubyte]    
         dll.FT_WriteGPIO.restype = ctypes.c_ulong
-        self._handle = ctypes.c_ulong(handle)
         self._direction = ctypes.c_ubyte(direction) # 1 is output, 0 is input for 8-bit GPIO port; valid range of 0-255
         self._value = ctypes.c_ubyte(value) # 1 is logic high, 0 is logic low for 8-bit GPIO port; valid range of 0-255
         if dll.FT_WriteGPIO(self._handle, self._direction, self._value) != 0:
@@ -268,10 +277,9 @@ class I2CMaster():
         
 # FT_ReadGPIO(FT_HANDLE handle, uint8 *value)
 
-    def ReadGPIO(self, handle):
+    def ReadGPIO(self):
         dll.FT_ReadGPIO.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_ubyte)]    
         dll.FT_ReadGPIO.restype = ctypes.c_ulong
-        self._handle = ctypes.c_ulong(handle)
         self._value = ctypes.c_ubyte() # 1 is logic high, 0 is logic low for 8-bit GPIO port; valid range of 0-255
         if dll.FT_ReadGPIO(self._handle, ctypes.byref(self._value)) != 0:
             print STATUS_CODES[dll.FT_ReadGPIO(self._handle, ctypes.byref(self._value))]
